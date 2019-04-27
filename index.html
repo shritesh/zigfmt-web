@@ -75,7 +75,8 @@
             .then(result => {
                 const fmt = format.bind(result.instance.exports);
 
-                document.querySelector('button').onclick = function (_e) {
+                document.querySelector('button').onclick = function (e) {
+                    e.preventDefault();
                     const textArea = document.querySelector('textarea');
                     const result = fmt(textArea.value);
                     textArea.value = result;
