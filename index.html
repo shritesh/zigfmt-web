@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>zig fmt</title>
+    <style>
+        textarea {
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Zig Formatter <button>Format</button></h1>
+    <textarea rows="42"
+        cols="120">const std = @import("std"); pub fn main() void { std.debug.warn("Hello World\n"); }</textarea>
+    <script>
+        const format = function (source) {
+            // convert source to Uint8Array
+            const textEncoder = new TextEncoder();
+            const sourceArray = textEncoder.encode(source);
+
+            // get memory from wasm
+            // assume first memory locations are for return values, the rest are for params
+            const return_len = (32 / 8) + (32 / 8); // u32, u32
+            const source_len = sourceArray.length;
+
+            const ptr = this._wasm_alloc(return_len + source_len);
+            if (ptr === 0) {
+                throw "Cannot allocate memory";
+            }
+
+            // copy sourceArray to wasm
+            var memoryu8 = new Uint8Array(this.memory.buffer);
+            for (let i = 0; i < source_len; ++i) {
+                memoryu8[ptr + return_len + i] = sourceArray[i];
+            }
+
+            // call function
+            const succeed = this.format_export(ptr + return_len, source_len, ptr, ptr + (32 / 8));
+
+            // read result into Uint32Array()
+            const return_slice = new Uint32Array(this.memory.buffer.slice(ptr, ptr + return_len));
+            const return_val_ptr = return_slice[0];
+            const return_val_len = return_slice[1];
+
+            // dealloc function params
+            this._wasm_dealloc(ptr, return_len + source_len);
+
+            // throw if function returned error
+            if (!succeed) {
+                throw "WASM Call returned error"
+            }
+
+            // get the result
+            const result = new Uint8Array(this.memory.buffer.slice(return_val_ptr, return_val_ptr + return_val_len));
+
+            // dealloc result
+            this._wasm_dealloc(return_val_ptr, return_val_len);
+
+            // decode result
+            const textDecoder = new TextDecoder();
+
+            // return result
+            return textDecoder.decode(result);
+        };
+
+        fetch('fmt.wasm')
+            .then(response => response.arrayBuffer())
+            .then(bytes => WebAssembly.instantiate(bytes, {}))
+            .then(result => {
+                const fmt = format.bind(result.instance.exports);
+
+                document.querySelector('button').onclick = function (_e) {
+                    const textArea = document.querySelector('textarea');
+                    const result = fmt(textArea.value);
+                    textArea.value = result;
+                };
+            });
+    </script>
+
+</body>
+
+</html>
