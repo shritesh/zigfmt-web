@@ -14,7 +14,7 @@
 </head>
 
 <body>
-    <h1>zig fmt <button disabled>Loading...</button></h1>
+    <h1>zig fmt <button disabled>Format</button></h1>
     <textarea rows="42"
         cols="120">const std = @import("std"); pub fn main() void { std.debug.warn("Hello World\n"); }</textarea>
     <p>Source: <a href="https://github.com/shritesh/zigfmt-web">https://github.com/shritesh/zigfmt-web</a></p>
@@ -76,7 +76,6 @@
                 const fmt = format.bind(result.instance.exports);
 
                 const button = document.querySelector('button');
-                button.innerText = "Format";
                 button.disabled = false;
 
                 button.onclick = function (e) {
