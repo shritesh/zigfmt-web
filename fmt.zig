@@ -4,6 +4,10 @@ fn format(source: []const u8, allocator: *std.mem.Allocator) ![]u8 {
     const tree = try std.zig.parse(allocator, source);
     defer tree.deinit();
 
+    if (tree.errors.len != 0) {
+        return error.ParseError;
+    }
+
     var buffer = try std.Buffer.initSize(allocator, 0);
     defer buffer.deinit();
 
