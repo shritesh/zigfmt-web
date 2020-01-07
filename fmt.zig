@@ -25,7 +25,7 @@ fn format(source: []const u8, allocator: *std.mem.Allocator) ![]u8 {
 export fn format_export(input_ptr: [*]const u8, input_len: usize, output_ptr: *[*]u8, output_len: *usize) bool {
     const input = input_ptr[0..input_len];
 
-    var output = format(input, std.heap.wasm_allocator) catch |err| return false;
+    var output = format(input, std.heap.page_allocator) catch |err| return false;
 
     output_ptr.* = output.ptr;
     output_len.* = output.len;
@@ -33,10 +33,10 @@ export fn format_export(input_ptr: [*]const u8, input_len: usize, output_ptr: *[
 }
 
 export fn _wasm_alloc(len: usize) u32 {
-    var buf = std.heap.wasm_allocator.alloc(u8, len) catch |err| return 0;
+    var buf = std.heap.page_allocator.alloc(u8, len) catch |err| return 0;
     return @ptrToInt(buf.ptr);
 }
 
 export fn _wasm_dealloc(ptr: [*]const u8, len: usize) void {
-    std.heap.wasm_allocator.free(ptr[0..len]);
+    std.heap.page_allocator.free(ptr[0..len]);
 }
